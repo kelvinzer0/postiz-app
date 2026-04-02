@@ -14,9 +14,11 @@ import { Integration } from '@prisma/client';
 import striptags from 'striptags';
 
 const telegramBot = new TelegramBot(process.env.TELEGRAM_TOKEN!);
-// Added to support local storage posting
 const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5000';
 const mediaStorage = process.env.STORAGE_PROVIDER || 'local';
+
+const normalizeCommand = (str: string | undefined) =>
+  str?.replace(/\u00a0/g, ' ').trim() || '';
 
 export class TelegramProvider extends SocialAbstract implements SocialProvider {
   override maxConcurrentJob = 3; // Telegram has moderate bot API limits
@@ -86,12 +88,13 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
       allowed_updates: ['message', 'channel_post'],
     });
     //message.text is for groups, channel_post.text is for channels
+    const expectedCommand = `/connect ${query.word}`;
     const match = res.find(
       (p) =>
-        (p?.message?.text === `/connect ${query.word}` &&
+        (normalizeCommand(p?.message?.text) === expectedCommand &&
           p?.message?.chat?.id) ||
-        (p?.channel_post?.text === `/connect ${query.word}` &&
-          p?.channel_post?.chat?.id)
+        (normalizeCommand(p?.channel_post?.text) === expectedCommand &&
+          p?.channel_post?.chat?.id),
     );
     // get correct chatId based on the channel type
     const chatId = match?.message?.chat?.id || match?.channel_post?.chat?.id;
@@ -110,7 +113,7 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
         // alternatively you can replace this with a console.log if you do not want to inform the user of the bot's admin status
         telegramBot.sendMessage(
           chatId,
-          "Connection Successful. I don't have admin privileges to delete these messages, please go ahead and remove them yourself."
+          "Connection Successful. I don't have admin privileges to delete these messages, please go ahead and remove them yourself.",
         );
       } else {
         // Delete the message that triggered the connection
@@ -118,7 +121,7 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
         // Send success message to the chat
         const successMessage = await telegramBot.sendMessage(
           chatId,
-          'Connection Successful. Message will be deleted in 10 seconds.'
+          'Connection Successful. Message will be deleted in 10 seconds.',
         );
         // Delete the success message after 10 seconds
         setTimeout(async () => {
@@ -132,10 +135,10 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
     return chatId
       ? { chatId }
       : res.length > 0
-      ? {
-          lastChatId: res[res.length - 1].update_id + 1,
-        }
-      : {};
+        ? {
+            lastChatId: res[res.length - 1].update_id + 1,
+          }
+        : {};
   }
 
   private processMedia(mediaFiles: PostDetails['media']) {
@@ -171,7 +174,7 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
   private async sendMessage(
     accessToken: string,
     message: PostDetails,
-    replyToMessageId?: number
+    replyToMessageId?: number,
   ): Promise<number | null> {
     let messageId: number | null = null;
     const mediaFiles = message.media || [];
@@ -205,21 +208,21 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
               accessToken,
               media.media,
               options,
-              media.fileOptions
+              media.fileOptions,
             )
           : media.type === 'photo'
-          ? await telegramBot.sendPhoto(
-              accessToken,
-              media.media,
-              options,
-              media.fileOptions
-            )
-          : await telegramBot.sendDocument(
-              accessToken,
-              media.media,
-              options,
-              media.fileOptions
-            );
+            ? await telegramBot.sendPhoto(
+                accessToken,
+                media.media,
+                options,
+                media.fileOptions,
+              )
+            : await telegramBot.sendDocument(
+                accessToken,
+                media.media,
+                options,
+                media.fileOptions,
+              );
       messageId = response.message_id;
     }
     // if there are multiple media, bot sends them as a media group - max 10 media per group - with the text as a caption (if there are more than 1 group, the caption will only be sent with the first group)
@@ -240,7 +243,7 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
             ...(replyToMessageId && i === 0
               ? { reply_to_message_id: replyToMessageId }
               : {}),
-          }
+          },
         );
         if (i === 0) {
           messageId = response[0].message_id;
@@ -254,7 +257,7 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
   async post(
     id: string,
     accessToken: string,
-    postDetails: PostDetails[]
+    postDetails: PostDetails[],
   ): Promise<PostResponse[]> {
     const [firstPost] = postDetails;
 
@@ -284,12 +287,16 @@ export class TelegramProvider extends SocialAbstract implements SocialProvider {
     lastCommentId: string | undefined,
     accessToken: string,
     postDetails: PostDetails[],
-    integration: Integration
+    integration: Integration,
   ): Promise<PostResponse[]> {
     const [commentPost] = postDetails;
     const replyToId = Number(lastCommentId || postId);
 
-    const messageId = await this.sendMessage(accessToken, commentPost, replyToId);
+    const messageId = await this.sendMessage(
+      accessToken,
+      commentPost,
+      replyToId,
+    );
 
     if (messageId) {
       return [
