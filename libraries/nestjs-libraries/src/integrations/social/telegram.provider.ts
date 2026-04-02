@@ -18,7 +18,10 @@ const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5000';
 const mediaStorage = process.env.STORAGE_PROVIDER || 'local';
 
 const normalizeCommand = (str: string | undefined) =>
-  str?.replace(/\u00a0/g, ' ').trim() || '';
+  str
+    ?.replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() || '';
 
 export class TelegramProvider extends SocialAbstract implements SocialProvider {
   override maxConcurrentJob = 3; // Telegram has moderate bot API limits
