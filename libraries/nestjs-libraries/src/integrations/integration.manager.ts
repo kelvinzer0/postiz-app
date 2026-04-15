@@ -37,6 +37,7 @@ import { SkoolProvider } from '@gitroom/nestjs-libraries/integrations/social/sko
 import { WhopProvider } from '@gitroom/nestjs-libraries/integrations/social/whop.provider';
 import { MeweProvider } from '@gitroom/nestjs-libraries/integrations/social/mewe.provider';
 import { HackernewsProvider } from '@gitroom/nestjs-libraries/integrations/social/hackernews.provider';
+import { IndiehackersProvider } from '@gitroom/nestjs-libraries/integrations/social/indiehackers.provider';
 
 export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = [
   new XProvider(),
@@ -73,6 +74,7 @@ export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = [
   new SkoolProvider(),
   new MeweProvider(),
   new HackernewsProvider(),
+  new IndiehackersProvider(),
   // new MastodonCustomProvider(),
 ];
 

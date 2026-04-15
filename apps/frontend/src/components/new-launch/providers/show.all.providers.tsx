@@ -40,6 +40,7 @@ import SkoolProvider from '@gitroom/frontend/components/new-launch/providers/sko
 import WhopProvider from '@gitroom/frontend/components/new-launch/providers/whop/whop.provider';
 import MeweProvider from '@gitroom/frontend/components/new-launch/providers/mewe/mewe.provider';
 import HackernewsProvider from '@gitroom/frontend/components/new-launch/providers/hackernews/hackernews.provider';
+import IndiehackersProvider from '@gitroom/frontend/components/new-launch/providers/indiehackers/indiehackers.provider';
 
 export const Providers = [
   {
@@ -177,6 +178,10 @@ export const Providers = [
   {
     identifier: 'hackernews',
     component: HackernewsProvider,
+  },
+  {
+    identifier: 'indiehackers',
+    component: IndiehackersProvider,
   },
 ];
 export const ShowAllProviders = forwardRef((props, ref) => {
